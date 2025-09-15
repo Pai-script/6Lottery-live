@@ -432,6 +432,7 @@
       border-radius: 8px;
       margin-top: 16px;
       font-size: 14px;
+      display: none;
     }
     
     .badge {
@@ -516,6 +517,34 @@
       display: block;
     }
     
+    /* Countdown Timer Styles */
+    .countdown-timer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      min-width: 140px;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .countdown-timer i {
+      font-size: 16px;
+    }
+    
+    .countdown-value {
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .countdown-timer.pulse {
+      animation: pulse 1s infinite;
+    }
+    
     @media (max-width: 768px) {
       header {
         flex-direction: column;
@@ -552,18 +581,18 @@
         <i class="fas fa-lock"></i>
       </div>
       
-      <h1>Secure Access Required</h1>
-      <p class="subtitle">Enter password to access prediction system</p>
+      <h1>6LOTTERY LIVE PREDICATION</h1>
+      <p class="subtitle">PLEASE PASSWORD USE</p>
       
       <div class="input-group">
         <i class="fas fa-key"></i>
         <input type="password" id="passwordInput" placeholder="Enter your password">
       </div>
       
-      <button class="btn" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Access System</button>
+      <button class="btn" id="loginBtn"><i class="fas fa-sign-in-alt"></i> LOGIN </button>
       
       <div class="message" id="message">
-        <i class="fas fa-exclamation-circle"></i> Incorrect password. Please try again.
+        <i class="fas fa-exclamation-circle"></i> Incorrect password. Please Try TO Developer .
       </div>
       <div class="contact-developer">
         Need help? <a href="https://t.me/zawzawaung700000" target="_blank">Contact Developer</a>
@@ -576,11 +605,15 @@
     <div class="wrap">
       <header>
         <div class="header-content">
-          <h1 style="text-align: center;"><i class="fas fa-brain" style="color: #dc2626; margin-right: 10px;"></i>6LOTTERY LIVE</h1>
+          <h1><i class="fas fa-brain" style="color: #dc2626; margin-right: 10px;"></i>6LOTTERY LIVE PREDICTOR</h1>
           <p class="lead"></p>
         </div>
         <div class="controls">
           <button id="fetchBtn" class="secondary"><i class="fas fa-sync-alt"></i> Fetch & Predict</button>
+          <div id="countdownTimer" class="countdown-timer" style="display: none;">
+            <i class="fas fa-clock"></i>
+            <span class="countdown-value">60</span>
+          </div>
         </div>
       </header>
 
@@ -591,7 +624,6 @@
         <div class="menu-item" data-section="history">History Data</div>
       </div>
       
-
 
       <div class="dashboard">
         <div id="statistics" class="card section active">
@@ -614,11 +646,11 @@
               <div class="stat-value" id="bigRatio">0%</div>
             </div>
             <div class="stat">
-              <div class="stat-label">Current Streak</div>
+              <div class="stat-label">LOSE COUNT</div>
               <div class="stat-value" id="currentStreak">0</div>
             </div>
             <div class="stat">
-              <div class="stat-label">Max Streak</div>
+              <div class="stat-label">WIN COUNT</div>
               <div class="stat-value" id="maxStreak">0</div>
             </div>
           </div>
@@ -627,7 +659,7 @@
         <div id="ai-prediction" class="card section">
           <div class="card-title"><i class="fas fa-robot"></i> AI Prediction</div>
           <div class="prediction-container">
-            <div class="prediction-label">Next Prediction</div>
+            <div class="prediction-label"></div>
             <div id="prediction" class="prediction">—</div>
             <div class="prediction-label">Confidence: <span id="confidence">—</span></div>
             
@@ -689,9 +721,7 @@
   </div>
 
   <script>
-
     document.addEventListener('DOMContentLoaded', function() {
-
       document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
         showMessage('Right-click is disabled for security reasons');
@@ -715,6 +745,9 @@
       const message = document.getElementById('message');
       const loginScreen = document.getElementById('loginScreen');
       const predictionContent = document.getElementById('predictionContent');
+      const fetchBtn = document.getElementById('fetchBtn');
+      const countdownTimer = document.getElementById('countdownTimer');
+      const countdownValue = document.querySelector('.countdown-value');
       
 
       function checkPassword(input) {
@@ -739,6 +772,8 @@
           setTimeout(() => {
             loginScreen.style.display = 'none';
             predictionContent.style.display = 'block';
+            // Start the countdown timer after successful login
+            startCountdownTimer();
           }, 500);
         } else {
           showMessage('Incorrect password. Please try again.');
@@ -783,7 +818,6 @@
       };
       const HEADERS = {"Content-Type": "application/json"};
 
-      const fetchBtn = document.getElementById("fetchBtn");
       const statusSpan = document.getElementById("status");
       const historyTable = document.getElementById("historyTable");
       const tbody = historyTable.querySelector("tbody");
@@ -809,6 +843,48 @@
       let virtualBalance = 1000;
       let wins = 0;
       let losses = 0;
+      let countdownInterval;
+
+      // Countdown Timer Functions
+      function startCountdownTimer() {
+        let seconds = 60;
+        
+        // Show countdown, hide fetch button
+        countdownTimer.style.display = 'flex';
+        fetchBtn.style.display = 'none';
+        
+        updateCountdownDisplay(seconds);
+        
+        countdownInterval = setInterval(() => {
+          seconds--;
+          updateCountdownDisplay(seconds);
+          
+          if (seconds <= 0) {
+            clearInterval(countdownInterval);
+            // Auto fetch when countdown reaches 0
+            fetchHistory();
+            // Restart the countdown
+            startCountdownTimer();
+          }
+        }, 1000);
+      }
+      
+      function updateCountdownDisplay(seconds) {
+        countdownValue.textContent = seconds;
+        
+        // Add pulse animation when below 10 seconds
+        if (seconds <= 10) {
+          countdownTimer.classList.add('pulse');
+        } else {
+          countdownTimer.classList.remove('pulse');
+        }
+      }
+      
+      function stopCountdownTimer() {
+        clearInterval(countdownInterval);
+        countdownTimer.style.display = 'none';
+        fetchBtn.style.display = 'flex';
+      }
 
       function setStatus(text, isSuccess = true) {
         statusSpan.innerHTML = isSuccess 
@@ -1045,7 +1121,7 @@
           historyData = list;
           const analyzed = analyzeAndPredict(list);
           renderHistory(analyzed);
-          setStatus("Data loaded successfully", true);
+          setStatus("Data Successfully", true);
           
         } catch (err) {
           console.error("Fetch error:", err);
@@ -1060,7 +1136,13 @@
         }
       }
 
-      fetchBtn.addEventListener("click", fetchHistory);
+      fetchBtn.addEventListener("click", function() {
+        // Stop the current countdown and manually fetch
+        stopCountdownTimer();
+        fetchHistory();
+        // Restart the countdown after manual fetch
+        startCountdownTimer();
+      });
     });
   </script>
 </body>

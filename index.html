@@ -9,7 +9,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
-    /* Your existing CSS styles remain unchanged */
     :root {
       --bg: #ffe5e5;
       --card: #ffffff;
@@ -246,6 +245,9 @@
     .lead {
       font-size: 14px;
       color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
     
     .dashboard {
@@ -551,6 +553,50 @@
       animation: pulse 1s infinite;
     }
     
+    /* Key Life Indicator Styles */
+    .key-life-indicator {
+      background: var(--card);
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .key-life-indicator.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .key-life-indicator.danger {
+      background: #fef2f2;
+      color: #dc2626;
+      animation: pulse 1s infinite;
+    }
+    
+    .key-life-progress {
+      width: 60px;
+      height: 4px;
+      background: #f3f4f6;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    .key-life-progress-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    
+    .key-life-text {
+      font-weight: 600;
+      min-width: 60px;
+      text-align: right;
+    }
+    
     @media (max-width: 768px) {
       header {
         flex-direction: column;
@@ -574,6 +620,26 @@
       
       .menu-item {
         padding: 10px;
+        text-align: center;
+      }
+      
+      .lead {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .key-life-indicator {
+        padding: 6px 10px;
+        font-size: 10px;
+      }
+      
+      .key-life-progress {
+        width: 50px;
+      }
+      
+      .key-life-text {
+        min-width: 50px;
         text-align: center;
       }
     }
@@ -612,7 +678,16 @@
       <header>
         <div class="header-content">
           <h1><i class="fas fa-brain" style="color: #dc2626; margin-right: 10px;"></i>6LOTTERY LIVE PREDICTOR</h1>
-          <p class="lead">Period: <span id="issueNumber">--</span></p>
+          <div class="lead">
+            <span>Period: <span id="issueNumber">--</span></span>
+            <div id="keyLifeIndicator" class="key-life-indicator" style="display: none;">
+              <i class="fas fa-key"></i>
+              <div class="key-life-progress">
+                <div id="keyLifeProgressBar" class="key-life-progress-bar" style="width: 100%"></div>
+              </div>
+              <div id="keyLifeText" class="key-life-text">Key: 30 days</div>
+            </div>
+          </div>
         </div>
         <div class="controls">
           <div id="countdownTimer" class="countdown-timer">
@@ -767,6 +842,13 @@
       const countdownTimer = document.getElementById('countdownTimer');
       const countdownValue = document.querySelector('.countdown-value');
       const issueNumberEl = document.getElementById('issueNumber');
+      const keyLifeIndicator = document.getElementById('keyLifeIndicator');
+      const keyLifeProgressBar = document.getElementById('keyLifeProgressBar');
+      const keyLifeText = document.getElementById('keyLifeText');
+      
+      let keyExpirationTime = null;
+      let keyLifeInterval = null;
+      let currentLicenseKey = null;
       
       function validateLicenseKey(key) {
         return new Promise((resolve, reject) => {
@@ -816,13 +898,101 @@
         }, 3000);
       }
       
+      function updateKeyLifeIndicator() {
+        if (!keyExpirationTime) return;
+        
+        const now = Date.now();
+        const timeRemaining = keyExpirationTime - now;
+        
+        if (timeRemaining <= 0) {
+          // Key has expired
+          keyLifeIndicator.className = 'key-life-indicator danger';
+          keyLifeProgressBar.style.width = '0%';
+          keyLifeText.textContent = 'Key: EXPIRED';
+          
+          // Log user out after expiration
+          setTimeout(() => {
+            logout();
+            showMessage('Your license key has expired. Please renew it.');
+          }, 5000);
+          
+          return;
+        }
+        
+        // Calculate days, hours, minutes remaining
+        const daysRemaining = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+        const hoursRemaining = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+        
+        // Update progress bar (assuming 30-day license)
+        const totalDuration = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+        const progressPercentage = (timeRemaining / totalDuration) * 100;
+        keyLifeProgressBar.style.width = `${Math.max(0, Math.min(100, progressPercentage))}%`;
+        
+        // Update text
+        if (daysRemaining > 0) {
+          keyLifeText.textContent = `Key: ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`;
+        } else if (hoursRemaining > 0) {
+          keyLifeText.textContent = `Key: ${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''}`;
+        } else {
+          keyLifeText.textContent = `Key: ${minutesRemaining} min${minutesRemaining !== 1 ? 's' : ''}`;
+        }
+        
+        // Change style based on remaining time
+        if (daysRemaining <= 1) {
+          keyLifeIndicator.className = 'key-life-indicator danger';
+        } else if (daysRemaining <= 7) {
+          keyLifeIndicator.className = 'key-life-indicator warning';
+        } else {
+          keyLifeIndicator.className = 'key-life-indicator';
+        }
+      }
+      
+      function startKeyLifeTracker(expiresAt) {
+        keyExpirationTime = expiresAt;
+        keyLifeIndicator.style.display = 'flex';
+        updateKeyLifeIndicator();
+        
+        // Update every minute
+        if (keyLifeInterval) clearInterval(keyLifeInterval);
+        keyLifeInterval = setInterval(updateKeyLifeIndicator, 60000);
+      }
+      
+      function stopKeyLifeTracker() {
+        if (keyLifeInterval) {
+          clearInterval(keyLifeInterval);
+          keyLifeInterval = null;
+        }
+        keyLifeIndicator.style.display = 'none';
+        keyExpirationTime = null;
+      }
+      
+      function logout() {
+        localStorage.removeItem('licenseKey');
+        stopKeyLifeTracker();
+        clearInterval(countdownInterval);
+        clearInterval(refreshInterval);
+        
+        loginScreen.style.display = 'flex';
+        setTimeout(() => {
+          loginScreen.style.opacity = '1';
+        }, 10);
+        predictionContent.style.display = 'none';
+      }
+      
       loginBtn.addEventListener('click', function() {
         const licenseKey = licenseKeyInput.value.trim();
+        currentLicenseKey = licenseKey;
         
         validateLicenseKey(licenseKey).then(result => {
           if (result.valid) {
             // Store the license key in localStorage for future validation if needed
             localStorage.setItem('licenseKey', licenseKey);
+            
+            // Start tracking key life if expiration is set
+            if (result.keyData.expiresAt) {
+              startKeyLifeTracker(result.keyData.expiresAt);
+            }
             
             loginScreen.style.opacity = '0';
             setTimeout(() => {
@@ -853,8 +1023,14 @@
       // Check if user already has a valid license key in localStorage
       const savedLicenseKey = localStorage.getItem('licenseKey');
       if (savedLicenseKey) {
+        currentLicenseKey = savedLicenseKey;
         validateLicenseKey(savedLicenseKey).then(result => {
           if (result.valid) {
+            // Start tracking key life if expiration is set
+            if (result.keyData.expiresAt) {
+              startKeyLifeTracker(result.keyData.expiresAt);
+            }
+            
             // Auto-login with saved key
             loginScreen.style.display = 'none';
             predictionContent.style.display = 'block';
@@ -1246,4 +1422,4 @@
     });
   </script>
 </body>
-  </html>
+              </html>

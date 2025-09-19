@@ -294,6 +294,7 @@
       font-size: 20px;
       font-weight: 700;
       margin: 8px 0;
+      transition: color 0.3s ease;
     }
     
     .stat-label {
@@ -333,6 +334,7 @@
       margin: 12px 0;
       text-align: center;
       min-width: 160px;
+      transition: all 0.5s ease;
     }
     
     .big {
@@ -928,6 +930,8 @@
       let wins = 0;
       let losses = 0;
       let countdownInterval;
+      let refreshInterval;
+      let currentIssue = null;
 
       // Countdown Timer
       function startCountdownTimer(endTime) {
@@ -1186,17 +1190,23 @@
             const issue = data.data.issue || data.data.issueNumber || data.data.period || data.data.currentIssue;
             
             if (issue) {
-              issueNumberEl.textContent = issue;
-              
-              // Try to get end time from different possible field names
-              const endTime = new Date(data.data.endTime || data.data.endDate || data.data.drawTime);
-              
-              // If we couldn't parse a valid date, set a default countdown (5 minutes)
-              if (isNaN(endTime.getTime())) {
-                endTime.setTime(Date.now() + 5 * 60 * 1000);
+              // Only update if the issue has changed
+              if (currentIssue !== issue) {
+                currentIssue = issue;
+                issueNumberEl.textContent = issue;
+                
+                // Try to get end time from different possible field names
+                const endTime = new Date(data.data.endTime || data.data.endDate || data.data.drawTime);
+                
+                // If we couldn't parse a valid date, set a default countdown (5 minutes)
+                if (isNaN(endTime.getTime())) {
+                  endTime.setTime(Date.now() + 5 * 60 * 1000);
+                }
+                
+                // Clear any existing interval
+                clearInterval(countdownInterval);
+                startCountdownTimer(endTime);
               }
-              
-              startCountdownTimer(endTime);
             } else {
               throw new Error("Issue number not found in response");
             }
@@ -1209,6 +1219,9 @@
           // Set a default issue number and countdown if API fails
           issueNumberEl.textContent = "N/A";
           
+          // Clear any existing interval
+          clearInterval(countdownInterval);
+          
           // Set a default countdown (5 minutes from now)
           const defaultEndTime = new Date();
           defaultEndTime.setMinutes(defaultEndTime.getMinutes() + 5);
@@ -1217,14 +1230,18 @@
       }
 
       function startGameIssueFetch() {
+        // Clear any existing intervals
+        clearInterval(countdownInterval);
+        clearInterval(refreshInterval);
+        
+        // Initial fetch
         fetchGameIssue();
         fetchHistory();
         
-        // Refresh data every 60 seconds
-        setInterval(() => {
+        // Set up interval to check for new rounds every 30 seconds
+        refreshInterval = setInterval(() => {
           fetchGameIssue();
-          fetchHistory();
-        }, 60000);
+        }, 30000);
       }
     });
   </script>

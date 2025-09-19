@@ -544,7 +544,6 @@
       animation: pulse 1s infinite;
     }
     
-    /* Key Life Indicator Styles */
     .key-life-indicator {
       background: var(--card);
       padding: 8px 12px;
@@ -1066,7 +1065,7 @@
       let countdownInterval;
       let refreshInterval;
       let currentIssue = null;
-      let use3Pattern = true; // Start with 3-result pattern (#1, #2, #3)
+      let use3Pattern = true; // Start with 3-result pattern (#3, #4, #5)
       let lastPrediction = null; // Store last prediction and pattern length
 
       // Countdown Timer
@@ -1223,7 +1222,7 @@
         confidenceEl.textContent = confidence;
         aiAnalysisEl.textContent = analysis;
         
-        // AI Prediction 2 (based on results #1, #2, #3 or #1, #2 with win/loss switching)
+        // AI Prediction 2 (based on results #3, #4, #5 or #3, #4)
         const patternMap3 = {
           'SSS': 'S',
           'BSS': 'B',
@@ -1248,22 +1247,28 @@
         Object.keys(patternMap2).forEach(key => patternSuccess2[key] = { total: 0, correct: 0 });
 
         // Analyze historical patterns for confidence
-        for (let i = 0; i < lastResults.length - 3; i++) {
-          const pattern3 = lastResults.slice(i, i + 3).map(r => r.result[0]).join('');
-          const actual3 = lastResults[i + 3].result[0];
-          const predicted3 = patternMap3[pattern3] || 'S';
-          if (patternSuccess3[pattern3]) {
-            patternSuccess3[pattern3].total++;
-            if (predicted3 === actual3) patternSuccess3[pattern3].correct++;
+        for (let i = 0; i < lastResults.length - 5; i++) {
+          // For patternMap3 (#3, #4, #5)
+          const pattern3 = lastResults.slice(i + 2, i + 5).map(r => r.result[0]).join('');
+          const actual3 = lastResults[i + 5]?.result[0];
+          if (pattern3 && actual3) {
+            const predicted3 = patternMap3[pattern3] || 'S';
+            if (patternSuccess3[pattern3]) {
+              patternSuccess3[pattern3].total++;
+              if (predicted3 === actual3) patternSuccess3[pattern3].correct++;
+            }
           }
 
-          if (i < lastResults.length - 2) {
-            const pattern2 = lastResults.slice(i, i + 2).map(r => r.result[0]).join('');
-            const actual2 = lastResults[i + 2].result[0];
-            const predicted2 = patternMap2[pattern2] || 'S';
-            if (patternSuccess2[pattern2]) {
-              patternSuccess2[pattern2].total++;
-              if (predicted2 === actual2) patternSuccess2[pattern2].correct++;
+          // For patternMap2 (#3, #4)
+          if (i < lastResults.length - 4) {
+            const pattern2 = lastResults.slice(i + 2, i + 4).map(r => r.result[0]).join('');
+            const actual2 = lastResults[i + 4]?.result[0];
+            if (pattern2 && actual2) {
+              const predicted2 = patternMap2[pattern2] || 'S';
+              if (patternSuccess2[pattern2]) {
+                patternSuccess2[pattern2].total++;
+                if (predicted2 === actual2) patternSuccess2[pattern2].correct++;
+              }
             }
           }
         }
@@ -1273,40 +1278,40 @@
         let analysis2 = "Waiting for data...";
 
         // Check if previous prediction was correct to determine pattern to use
-        if (lastPrediction && lastResults.length >= 4) {
-          const actualLatest = lastResults[lastResults.length - 1].result[0];
+        if (lastPrediction && lastResults.length >= 6) {
+          const actualLatest = lastResults[0].result[0]; // Latest result is #1
           if (lastPrediction.predicted === actualLatest) {
             // Previous prediction was correct, keep using the same pattern length
             use3Pattern = lastPrediction.patternLength === 3;
           } else {
-            // Previous prediction was incorrect, switch pattern
+            // Previous prediction was incorrect, switch pattern length
             use3Pattern = lastPrediction.patternLength !== 3;
           }
         }
 
-        if (lastResults.length >= 2) {
+        if (lastResults.length >= 4) {
           let patternKey, predictedLetter, patternLength;
 
-          if (use3Pattern && lastResults.length >= 3) {
-            // Use results #1, #2, #3
-            const first3 = lastResults.slice(0, 3); // #1, #2, #3
-            patternKey = first3[0].result[0] + first3[1].result[0] + first3[2].result[0];
+          if (use3Pattern && lastResults.length >= 5) {
+            // Use results #3, #4, #5
+            const threeResults = lastResults.slice(2, 5); // #3, #4, #5
+            patternKey = threeResults[0].result[0] + threeResults[1].result[0] + threeResults[2].result[0];
             predictedLetter = patternMap3[patternKey] || 'S';
             patternLength = 3;
             confidence2 = patternSuccess3[patternKey] && patternSuccess3[patternKey].total > 0
               ? `${Math.round((patternSuccess3[patternKey].correct / patternSuccess3[patternKey].total) * 100)}%`
               : '50%';
-            analysis2 = `Based on pattern matching of results #1, #2, #3: ${patternKey} -> ${predictedLetter === 'B' ? 'BIG' : 'SMALL'}`;
+            analysis2 = "Ko Zaw Live Result Analyzer 3 Matching";
           } else {
-            // Use results #1, #2
-            const first2 = lastResults.slice(0, 2); // #1, #2
-            patternKey = first2[0].result[0] + first2[1].result[0];
+            // Use results #3, #4
+            const twoResults = lastResults.slice(2, 4); // #3, #4
+            patternKey = twoResults[0].result[0] + twoResults[1].result[0];
             predictedLetter = patternMap2[patternKey] || 'S';
             patternLength = 2;
             confidence2 = patternSuccess2[patternKey] && patternSuccess2[patternKey].total > 0
               ? `${Math.round((patternSuccess2[patternKey].correct / patternSuccess2[patternKey].total) * 100)}%`
               : '50%';
-            analysis2 = `Based on pattern matching of results #1, #2: ${patternKey} -> ${predictedLetter === 'B' ? 'BIG' : 'SMALL'}`;
+            analysis2 = "Ko Zaw Live Result Analyzer 2 Matching";
           }
 
           prediction2 = predictedLetter === 'B' ? 'BIG' : 'SMALL';

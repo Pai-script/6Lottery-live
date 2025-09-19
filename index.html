@@ -1126,6 +1126,8 @@
       let countdownInterval;
       let refreshInterval;
       let currentIssue = null;
+      let use3Pattern = true; // Start with 3-result pattern (#1, #2, #3)
+      let lastPrediction = null; // Store last prediction and pattern length
 
       // Countdown Timer
       function startCountdownTimer(endTime) {
@@ -1216,7 +1218,8 @@
           lastResults.push({
             number: rawNum,
             digit: d,
-            result: isBig ? "BIG" : "SMALL"
+            result: isBig ? "BIG" : "SMALL",
+            index: idx + 1 // Store the index (#1, #2, etc.)
           });
         });
 
@@ -1280,10 +1283,7 @@
         confidenceEl.textContent = confidence;
         aiAnalysisEl.textContent = analysis;
         
-        // AI Prediction 2 (new pattern-based)
-        let prediction2 = "—";
-        let confidence2 = "—";
-        let analysis2 = "Waiting for data...";
+        // AI Prediction 2 (based on results #1, #2, #3 or #1, #2 with win/loss switching)
         const patternMap3 = {
           'SSS': 'S',
           'BSS': 'B',
@@ -1301,37 +1301,81 @@
           'BB': 'B'
         };
 
-        if (lastResults.length >= 2) {
-          let use3 = true;
-          if (lastResults.length >= 4) {
-            // Check if previous prediction with 3 lost
-            const prev3 = lastResults.slice(-4, -1);
-            const prevPattern = prev3[0].result[0] + prev3[1].result[0] + prev3[2].result[0];
-            const predictedPrev = patternMap3[prevPattern] || 'S'; // Default if not found
-            const actualPrev = lastResults.slice(-1)[0].result[0];
-            if (predictedPrev !== actualPrev) {
-              use3 = false;
-            }
+        // Track pattern success rates for confidence
+        const patternSuccess3 = {};
+        const patternSuccess2 = {};
+        Object.keys(patternMap3).forEach(key => patternSuccess3[key] = { total: 0, correct: 0 });
+        Object.keys(patternMap2).forEach(key => patternSuccess2[key] = { total: 0, correct: 0 });
+
+        // Analyze historical patterns for confidence
+        for (let i = 0; i < lastResults.length - 3; i++) {
+          const pattern3 = lastResults.slice(i, i + 3).map(r => r.result[0]).join('');
+          const actual3 = lastResults[i + 3].result[0];
+          const predicted3 = patternMap3[pattern3] || 'S';
+          if (patternSuccess3[pattern3]) {
+            patternSuccess3[pattern3].total++;
+            if (predicted3 === actual3) patternSuccess3[pattern3].correct++;
           }
 
-          let patternKey, predictedLetter, patternLength;
-          if (use3 && lastResults.length >= 3) {
-            const last3 = lastResults.slice(-3);
-            patternKey = last3[0].result[0] + last3[1].result[0] + last3[2].result[0];
-            predictedLetter = patternMap3[patternKey] || 'S'; // Default if not found
-            patternLength = 3;
+          if (i < lastResults.length - 2) {
+            const pattern2 = lastResults.slice(i, i + 2).map(r => r.result[0]).join('');
+            const actual2 = lastResults[i + 2].result[0];
+            const predicted2 = patternMap2[pattern2] || 'S';
+            if (patternSuccess2[pattern2]) {
+              patternSuccess2[pattern2].total++;
+              if (predicted2 === actual2) patternSuccess2[pattern2].correct++;
+            }
+          }
+        }
+
+        let prediction2 = "—";
+        let confidence2 = "—";
+        let analysis2 = "Waiting for data...";
+
+        // Check if previous prediction was correct to determine pattern to use
+        if (lastPrediction && lastResults.length >= 4) {
+          const actualLatest = lastResults[lastResults.length - 1].result[0];
+          if (lastPrediction.predicted === actualLatest) {
+            // Previous prediction was correct, keep using the same pattern length
+            use3Pattern = lastPrediction.patternLength === 3;
           } else {
-            const last2 = lastResults.slice(-2);
-            patternKey = last2[0].result[0] + last2[1].result[0];
-            predictedLetter = patternMap2[patternKey] || 'S'; // Default if not found
+            // Previous prediction was incorrect, switch pattern
+            use3Pattern = lastPrediction.patternLength !== 3;
+          }
+        }
+
+        if (lastResults.length >= 2) {
+          let patternKey, predictedLetter, patternLength;
+
+          if (use3Pattern && lastResults.length >= 3) {
+            // Use results #1, #2, #3
+            const first3 = lastResults.slice(0, 3); // #1, #2, #3
+            patternKey = first3[0].result[0] + first3[1].result[0] + first3[2].result[0];
+            predictedLetter = patternMap3[patternKey] || 'S';
+            patternLength = 3;
+            confidence2 = patternSuccess3[patternKey] && patternSuccess3[patternKey].total > 0
+              ? `${Math.round((patternSuccess3[patternKey].correct / patternSuccess3[patternKey].total) * 100)}%`
+              : '50%';
+            analysis2 = `Based on pattern matching of results #1, #2, #3: ${patternKey} -> ${predictedLetter === 'B' ? 'BIG' : 'SMALL'}`;
+          } else {
+            // Use results #1, #2
+            const first2 = lastResults.slice(0, 2); // #1, #2
+            patternKey = first2[0].result[0] + first2[1].result[0];
+            predictedLetter = patternMap2[patternKey] || 'S';
             patternLength = 2;
+            confidence2 = patternSuccess2[patternKey] && patternSuccess2[patternKey].total > 0
+              ? `${Math.round((patternSuccess2[patternKey].correct / patternSuccess2[patternKey].total) * 100)}%`
+              : '50%';
+            analysis2 = `Based on pattern matching of results #1, #2: ${patternKey} -> ${predictedLetter === 'B' ? 'BIG' : 'SMALL'}`;
           }
 
           prediction2 = predictedLetter === 'B' ? 'BIG' : 'SMALL';
-          confidence2 = patternLength === 3 ? '75%' : '60%'; // Arbitrary confidence based on pattern length
-          analysis2 = `Based on pattern matching of last ${patternLength} results: ${patternKey} -> ${prediction2}`;
-        } else {
-          analysis2 = "Not enough data for prediction";
+
+          // Store the current prediction for next iteration
+          lastPrediction = {
+            predicted: predictedLetter,
+            patternLength: patternLength
+          };
         }
 
         prediction2El.textContent = prediction2;
@@ -1405,7 +1449,7 @@
             results.forEach((h, idx) => {
               const tr = document.createElement("tr");
               tr.innerHTML = `
-                <td>${idx + 1}</td>
+                <td>${h.index}</td>
                 <td>${h.number}</td>
                 <td>
                   <span class="badge ${h.result === 'BIG' ? 'badge-big' : 'badge-small'}">

@@ -161,15 +161,6 @@
       display: none;
     }
     
-    .protection-note {
-      margin-top: 16px;
-      padding: 10px;
-      background: #fef2f2;
-      border-radius: 8px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    
     .contact-developer {
       margin-top: 16px;
       font-size: 14px;
@@ -562,33 +553,6 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      transition: all 0.3s ease;
-    }
-    
-    .key-life-indicator.warning {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    
-    .key-life-indicator.danger {
-      background: #fef2f2;
-      color: #dc2626;
-      animation: pulse 1s infinite;
-    }
-    
-    .key-life-progress {
-      width: 60px;
-      height: 4px;
-      background: #f3f4f6;
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    
-    .key-life-progress-bar {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 2px;
-      transition: width 0.3s ease;
     }
     
     .key-life-text {
@@ -632,10 +596,6 @@
       .key-life-indicator {
         padding: 6px 10px;
         font-size: 10px;
-      }
-      
-      .key-life-progress {
-        width: 50px;
       }
       
       .key-life-text {
@@ -682,9 +642,6 @@
             <span>Period: <span id="issueNumber">--</span></span>
             <div id="keyLifeIndicator" class="key-life-indicator" style="display: none;">
               <i class="fas fa-key"></i>
-              <div class="key-life-progress">
-                <div id="keyLifeProgressBar" class="key-life-progress-bar" style="width: 100%"></div>
-              </div>
               <div id="keyLifeText" class="key-life-text">Key: 30 days</div>
             </div>
           </div>
@@ -858,7 +815,6 @@
       const countdownValue = document.querySelector('.countdown-value');
       const issueNumberEl = document.getElementById('issueNumber');
       const keyLifeIndicator = document.getElementById('keyLifeIndicator');
-      const keyLifeProgressBar = document.getElementById('keyLifeProgressBar');
       const keyLifeText = document.getElementById('keyLifeText');
       
       let keyExpirationTime = null;
@@ -921,8 +877,6 @@
         
         if (timeRemaining <= 0) {
           // Key has expired
-          keyLifeIndicator.className = 'key-life-indicator danger';
-          keyLifeProgressBar.style.width = '0%';
           keyLifeText.textContent = 'Key: EXPIRED';
           
           // Log user out after expiration
@@ -939,11 +893,6 @@
         const hoursRemaining = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
         
-        // Update progress bar (assuming 30-day license)
-        const totalDuration = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-        const progressPercentage = (timeRemaining / totalDuration) * 100;
-        keyLifeProgressBar.style.width = `${Math.max(0, Math.min(100, progressPercentage))}%`;
-        
         // Update text
         if (daysRemaining > 0) {
           keyLifeText.textContent = `Key: ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`;
@@ -951,15 +900,6 @@
           keyLifeText.textContent = `Key: ${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''}`;
         } else {
           keyLifeText.textContent = `Key: ${minutesRemaining} min${minutesRemaining !== 1 ? 's' : ''}`;
-        }
-        
-        // Change style based on remaining time
-        if (daysRemaining <= 1) {
-          keyLifeIndicator.className = 'key-life-indicator danger';
-        } else if (daysRemaining <= 7) {
-          keyLifeIndicator.className = 'key-life-indicator warning';
-        } else {
-          keyLifeIndicator.className = 'key-life-indicator';
         }
       }
       

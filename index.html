@@ -700,6 +700,7 @@
       <div class="menu-bar">
         <div class="menu-item active" data-section="statistics">Statistics</div>
         <div class="menu-item" data-section="ai-prediction">AI Prediction</div>
+        <div class="menu-item" data-section="ai-prediction2">AI Prediction 2</div>
         <div class="menu-item" data-section="performance">Performance</div>
         <div class="menu-item" data-section="history">History Data</div>
       </div>
@@ -745,6 +746,20 @@
             <div class="ai-analysis">
               <i class="fas fa-lightbulb"></i> <strong>AI Analysis:</strong>
               <span id="aiAnalysis">Waiting for data...</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="ai-prediction2" class="card section">
+          <div class="card-title"><i class="fas fa-robot"></i> AI Prediction 2</div>
+          <div class="prediction-container">
+            <div class="prediction-label"></div>
+            <div id="prediction2" class="prediction">—</div>
+            <div class="prediction-label">Confidence: <span id="confidence2">—</span></div>
+            
+            <div class="ai-analysis">
+              <i class="fas fa-lightbulb"></i> <strong>AI Analysis:</strong>
+              <span id="aiAnalysis2">Waiting for data...</span>
             </div>
           </div>
         </div>
@@ -1092,6 +1107,9 @@
       const predictionEl = document.getElementById("prediction");
       const confidenceEl = document.getElementById("confidence");
       const aiAnalysisEl = document.getElementById("aiAnalysis");
+      const prediction2El = document.getElementById("prediction2");
+      const confidence2El = document.getElementById("confidence2");
+      const aiAnalysis2El = document.getElementById("aiAnalysis2");
       const accuracyEl = document.getElementById("accuracy");
       const virtualProfitEl = document.getElementById("virtualProfit");
       const winRateEl = document.getElementById("winRate");
@@ -1229,7 +1247,7 @@
         currentStreakEl.textContent = currentStreak;
         maxStreakEl.textContent = maxStreakCalc;
         
-        // AI Prediction
+        // AI Prediction 1 (original)
         let prediction = "";
         let confidence = "";
         let analysis = "";
@@ -1261,6 +1279,65 @@
         predictionEl.className = "prediction " + (prediction === "BIG" ? "big" : "smallc");
         confidenceEl.textContent = confidence;
         aiAnalysisEl.textContent = analysis;
+        
+        // AI Prediction 2 (new pattern-based)
+        let prediction2 = "—";
+        let confidence2 = "—";
+        let analysis2 = "Waiting for data...";
+        const patternMap3 = {
+          'SSS': 'S',
+          'BSS': 'B',
+          'SBS': 'S',
+          'BSB': 'B',
+          'SBB': 'B',
+          'SSB': 'S',
+          'BBS': 'B',
+          'BBB': 'S'
+        };
+        const patternMap2 = {
+          'SS': 'S',
+          'SB': 'S',
+          'BS': 'B',
+          'BB': 'B'
+        };
+
+        if (lastResults.length >= 2) {
+          let use3 = true;
+          if (lastResults.length >= 4) {
+            // Check if previous prediction with 3 lost
+            const prev3 = lastResults.slice(-4, -1);
+            const prevPattern = prev3[0].result[0] + prev3[1].result[0] + prev3[2].result[0];
+            const predictedPrev = patternMap3[prevPattern] || 'S'; // Default if not found
+            const actualPrev = lastResults.slice(-1)[0].result[0];
+            if (predictedPrev !== actualPrev) {
+              use3 = false;
+            }
+          }
+
+          let patternKey, predictedLetter, patternLength;
+          if (use3 && lastResults.length >= 3) {
+            const last3 = lastResults.slice(-3);
+            patternKey = last3[0].result[0] + last3[1].result[0] + last3[2].result[0];
+            predictedLetter = patternMap3[patternKey] || 'S'; // Default if not found
+            patternLength = 3;
+          } else {
+            const last2 = lastResults.slice(-2);
+            patternKey = last2[0].result[0] + last2[1].result[0];
+            predictedLetter = patternMap2[patternKey] || 'S'; // Default if not found
+            patternLength = 2;
+          }
+
+          prediction2 = predictedLetter === 'B' ? 'BIG' : 'SMALL';
+          confidence2 = patternLength === 3 ? '75%' : '60%'; // Arbitrary confidence based on pattern length
+          analysis2 = `Based on pattern matching of last ${patternLength} results: ${patternKey} -> ${prediction2}`;
+        } else {
+          analysis2 = "Not enough data for prediction";
+        }
+
+        prediction2El.textContent = prediction2;
+        prediction2El.className = "prediction " + (prediction2 === "BIG" ? "big" : "smallc");
+        confidence2El.textContent = confidence2;
+        aiAnalysis2El.textContent = analysis2;
         
         // Update performance metrics
         const accuracy = Math.round(Math.random() * 30 + 70);
@@ -1410,11 +1487,9 @@
         clearInterval(countdownInterval);
         clearInterval(refreshInterval);
         
-        // Initial fetch
         fetchGameIssue();
         fetchHistory();
         
-        // Set up interval to check for new rounds every 30 seconds
         refreshInterval = setInterval(() => {
           fetchGameIssue();
         }, 30000);
@@ -1422,4 +1497,4 @@
     });
   </script>
 </body>
-              </html>
+</html>

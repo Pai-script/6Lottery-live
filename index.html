@@ -23,6 +23,17 @@
       --header-bg: rgba(255, 255, 255, 0.95);
       --login-bg: #fef2f2;
     }
+
+    /* Green and black theme for Bigwin */
+    body.bigwin {
+      --accent: #22c55e; /* Green */
+      --big: #16a34a; /* Darker green for BIG */
+      --small: #4ade80; /* Lighter green for SMALL */
+      --profit: #4ade80; /* Lighter green for profit */
+      --loss: #1f2937; /* Dark gray-black for loss */
+      --header-bg: rgba(34, 197, 94, 0.1); /* Light green header background */
+      --login-bg: #f0fdf4; /* Light green login background */
+    }
    
     * {
       box-sizing: border-box;
@@ -124,7 +135,7 @@
       display: none;
       flex-direction: column;
       overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth animation */
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
    
     #floating-window.minimized {
@@ -208,7 +219,7 @@
     .logo {
       width: 64px;
       height: 64px;
-      background: linear-gradient(135deg, var(--accent), #f87171);
+      background: linear-gradient(135deg, var(--accent), var(--big));
       border-radius: 50%;
       margin: 0 auto 16px;
       display: flex;
@@ -251,8 +262,8 @@
     input {
       width: 100%;
       padding: 12px 12px 12px 40px;
-      background: #fef2f2;
-      border: 1px solid #d4d4d4;
+      background: var(--login-bg);
+      border: 1px solid var(--neutral);
       border-radius: 8px;
       outline: none;
       color: var(--text);
@@ -262,7 +273,7 @@
    
     input:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
     }
    
     .btn {
@@ -283,7 +294,7 @@
     }
    
     .btn:hover {
-      background: #dc2626;
+      background: var(--big);
       transform: translateY(-2px);
     }
    
@@ -291,7 +302,7 @@
       margin-top: 16px;
       padding: 10px;
       border-radius: 8px;
-      background: rgba(239, 68, 68, 0.1);
+      background: rgba(34, 197, 94, 0.1);
       color: var(--loss);
       font-size: 14px;
       display: none;
@@ -350,8 +361,8 @@
     }
    
     button.secondary {
-      background: #fef2f2;
-      border: 1px solid #d4d4d4;
+      background: var(--login-bg);
+      border: 1px solid var(--neutral);
       color: var(--text);
       padding: 8px 12px;
       border-radius: 6px;
@@ -365,7 +376,7 @@
     }
    
     button.secondary:hover {
-      background: #fee2e2;
+      background: rgba(34, 197, 94, 0.2);
       border-color: var(--accent);
       color: var(--accent);
     }
@@ -414,7 +425,7 @@
     }
    
     .stat {
-      background: #fef2f2;
+      background: var(--login-bg);
       padding: 12px;
       border-radius: 8px;
       text-align: center;
@@ -468,15 +479,15 @@
     }
    
     .big {
-      background: rgba(220, 38, 38, 0.1);
+      background: rgba(22, 163, 74, 0.1);
       color: var(--big);
-      box-shadow: 0 0 12px rgba(220, 38, 38, 0.2);
+      box-shadow: 0 0 12px rgba(22, 163, 74, 0.2);
     }
    
     .smallc {
-      background: rgba(249, 115, 22, 0.1);
+      background: rgba(74, 222, 128, 0.1);
       color: var(--small);
-      box-shadow: 0 0 12px rgba(249, 115, 22, 0.2);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.2);
     }
    
     .prediction-label {
@@ -488,7 +499,7 @@
     .ai-analysis {
       margin-top: 16px;
       padding: 12px;
-      background: #fef2f2;
+      background: var(--login-bg);
       border-radius: 8px;
       font-size: 14px;
     }
@@ -500,7 +511,7 @@
       align-items: flex-end;
       gap: 4px;
       padding: 12px;
-      background: #fef2f2;
+      background: var(--login-bg);
       border-radius: 8px;
     }
    
@@ -538,7 +549,7 @@
    
     th, td {
       padding: 12px;
-      border-bottom: 1px solid #fee2e2;
+      border-bottom: 1px solid rgba(34, 197, 94, 0.2);
       text-align: left;
       font-size: 14px;
     }
@@ -546,7 +557,7 @@
     th {
       color: var(--muted);
       font-weight: 600;
-      background: #fef2f2;
+      background: var(--login-bg);
     }
    
     tr:last-child td {
@@ -563,7 +574,7 @@
    
     .error {
       color: var(--loss);
-      background: rgba(239, 68, 68, 0.1);
+      background: rgba(31, 41, 55, 0.1);
       padding: 12px;
       border-radius: 8px;
       margin-top: 16px;
@@ -581,22 +592,22 @@
     }
    
     .badge-big {
-      background: rgba(220, 38, 38, 0.1);
+      background: rgba(22, 163, 74, 0.1);
       color: var(--big);
     }
    
     .badge-small {
-      background: rgba(249, 115, 22, 0.1);
+      background: rgba(74, 222, 128, 0.1);
       color: var(--small);
     }
    
     .badge-profit {
-      background: rgba(249, 115, 22, 0.1);
+      background: rgba(74, 222, 128, 0.1);
       color: var(--profit);
     }
    
     .badge-loss {
-      background: rgba(220, 38, 38, 0.1);
+      background: rgba(31, 41, 55, 0.1);
       color: var(--loss);
     }
    
@@ -652,7 +663,7 @@
     }
    
     .menu-item:hover {
-      background: #fee2e2;
+      background: rgba(34, 197, 94, 0.2);
     }
    
     .section {
@@ -669,13 +680,13 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
+      background: linear-gradient(135deg, var(--accent), var(--big));
       color: white;
       padding: 8px 16px;
       border-radius: 6px;
       font-weight: 600;
       min-width: 140px;
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
     }
    
     .countdown-timer i {
@@ -812,7 +823,7 @@
         <div class="wrap">
           <header>
             <div class="header-content">
-              <h1 id="header-title"><i class="fas fa-brain" style="color: #dc2626; margin-right: 10px;"></i>6LOTTERY LIVE PREDICTOR</h1>
+              <h1 id="header-title"><i class="fas fa-brain" style="color: var(--big); margin-right: 10px;"></i>6LOTTERY LIVE PREDICTOR</h1>
               <div class="lead">
                 <span>Period: <span id="issueNumber">--</span></span>
                 <div id="keyLifeIndicator" class="key-life-indicator" style="display: none;">
@@ -1010,7 +1021,8 @@
       document.getElementById('site-background').src = site.iframe;
       document.getElementById('window-title').textContent = site.title;
       document.getElementById('main-title').textContent = site.title.replace(' LIVE PREDICTOR', ' LIVE PREDICTION');
-      document.getElementById('header-title').innerHTML = `<i class="fas fa-brain" style="color: #dc2626; margin-right: 10px;"></i>${site.title}`;
+      document.getElementById('header-title').innerHTML = `<i class="fas fa-brain" style="color: var(--big); margin-right: 10px;"></i>${site.title}`;
+      document.body.className = currentSite === 'bigwin' ? 'bigwin' : '';
       startGameIssueFetch();
     }
 
